@@ -23,7 +23,7 @@ a. Steps to calculate grid model
 b. I would increase the length of the pi values vector. This would enable us to have a more "granular" or finely tuned understanding of the posterior (we will have thinner grid "slices").
 
 ## Exercise 6.2
-
+![caption](/Users/stephjordan/Downloads/IMG_2082.jpg)
 
 ## Exercise 6.3
 a. The approximation might not reach exploration of lower pi values. Therefore, it could overestimate the plausibility of pi values in the range it reached (high pi values), and underestimate the plausibility of pi values outside the range it reached (low pi values), leading to a density plot that is more right skewed than the posterior. 
@@ -189,18 +189,20 @@ a. Approximating the posterior model of lambda for lambda in {5, 6, 7, ...15}
 
 ```{r}
 # Step 1: Define a grid of 6 pi values
-grid_data <- data.frame(pi_grid = seq(from = 5, to = 15, length = 11))
+grid_data <- data.frame(mu_grid = seq(from = 5, to = 15, length = 11))
 
 ```
 ```{r}
 obsv_mean <- mean(c(7.1, 8.9, 8.4, 8.6))
-obsv_sigma <- 1.3
+obsv_sigma <- 1.69
 n <- 4
-likelihood <- e^{(obsv_mean - mu)^(2)/(2*obsv_sigma^(2)/n)}
+##could use below code in for loop to calculate likelihoods for all mu's
+#likelihood <- e((obsv_mean - mu)^(2)/(2*obsv_sigma^(2)/n))
+
 # Step 2: Evaluate the prior & likelihood at each lambda
 grid_data <- grid_data %>% 
-  mutate(prior = normal(10, 1.44),
-      likelihood = likelihood)
+  mutate(prior = dnorm(10, 1.44),
+      likelihood = (dnorm(7.1, mean=mu_grid, sd=1.69)*dnorm(8.9, mean=mu_grid, sd=1.69)*dnorm(8.4, mean=mu_grid, sd=1.69)*dnorm(8.6, mean=mu_grid, sd=1.69)))
 
 # Step 3: Approximate the posterior
 grid_data <- grid_data %>% 
@@ -218,7 +220,7 @@ post_sample <- sample_n(grid_data, size = 10000,
 Histogram of posterior model below:
 ```{r}
 # Histogram of the grid simulation with posterior pdf 
-ggplot(post_sample, aes(x = lambda_grid)) + 
+ggplot(post_sample, aes(x = mu_grid)) + 
   geom_histogram(aes(y = ..density..), color = "white") + 
   stat_function(fun = dgamma, args = list(13, 3)) + 
   lims(x = c(0, 15))
@@ -337,6 +339,7 @@ bb_sim <- stan(model_code = bb_model, data = list(Y = 12),
 
 ```
 
+
 b. The RSTAN syntax is as follows:
 ```{r}
 # STEP 1: DEFINE the model
@@ -424,6 +427,7 @@ mcmc_dens_chains(bb_sim, pars = "pi") +
 
 e. The posterior model for this example is as follows:
 $$Beta(5, 16) $$
+The mean estimated by the posterior (0.3125) is slightly greater than that produced by the MCMC approximations (which hovers closer to 0.2).
 
 ## Exercise 6.14
 a. Building and simulating model
@@ -467,6 +471,7 @@ mcmc_dens_chains(bb_sim, pars = "pi") +
 
 e. The posterior model for this example is as follows:
 $$Beta(8, 11) $$
+The mean estimated by the posterior (0.727) is slightly greater than that produced by the MCMC approximations (which hovers closer to 0.55).
 
 ## Exercise 6.15
 a. Building and simulating the model:
@@ -508,15 +513,11 @@ mcmc_dens_chains(gp_sim, pars = "lambda") +
   ylab("density")
 ```
 
-c. Based on the density plots, the most plausible posterior value of x seems to be...
+c. Based on the density plots, the most plausible posterior value of lambda seems to be around 2.5.
 
 d. The posterior model is as follows:
 $$Gamma(21, 8)$$
-The mean lambda produced by the specified model is 21/8==2.625. This is higher/lower than our approximated average for lambda. The mode produced by the specified model is 2.5; this is higher/lower than the approximated mode for lambda. 
-
-```{r}
-summarize_gamma_poisson(20, 5, 1, 3)
-```
+The mean lambda produced by the specified model is 21/8==2.625. This is slightly higher than our MCMC approximated average for lambda (2.5ish). 
 
 
 ## Exercise 6.16
@@ -560,15 +561,12 @@ mcmc_dens_chains(gp_sim, pars = "lambda") +
   ylab("density")
 ```
 
-c. Based on the density plots, the most plausible posterior value of x seems to be...
+c. Based on the density plots, the most plausible posterior value of lambda seems to be around 0.6.
 
 d. The posterior model is as follows:
 $$Gamma(6, 8)$$
-The mean lambda produced by the specified model is 6/8==0.75. This is higher/lower than our approximated average for lambda. The mode produced by the specified model is 2.5; this is higher/lower than the approximated mode for lambda. 
+The mean lambda produced by the specified model is 6/8==0.75. This is higher than our MCMC approximated average for lambda. 
 
-```{r}
-summarize_gamma_poisson(5, 5, 1, 3)
-```
 
 ## Exercise 6.17
 
@@ -577,7 +575,7 @@ a. Building and simulating the model:
 # STEP 1: DEFINE the model
 gp_model <- "
   data {
-    int<lower = 0> Y[4];
+    real<lower = 0> Y[4];
   }
   parameters {
     real<lower= 0> mu;
@@ -610,14 +608,14 @@ mcmc_dens_chains(gp_sim, pars = "mu") +
   ylab("density")
 ```
 
-c. Based on the density plots, the most plausible posterior value of mu seems to be...
+c. Based on the density plots, the most plausible posterior value of mu seems to be around 9. 
 
 d. The posterior model is as follows:
 ```{r}
 prior_mean <- 10
-prior_sd <- 1.2
+prior_sd <- 1.44
 obsv_mean <- mean(c(7.1, 8.9, 8.4, 8.6))
-obsv_sd <- 1.3
+obsv_sd <- 1.69
 n <- 4
 posterior_mu <- prior_mean*obsv_sd^2/(n*prior_sd^2+obsv_sd^2)+obsv_mean * ((n*prior_sd^2)/(n*prior_sd^2+obsv_sd^2))
 posterior_sigma <- (prior_sd^2*obsv_sd^2)/(n*prior_sd^2+obsv_sd^2)
@@ -626,8 +624,8 @@ posterior_mu
 posterior_sigma
 ```
 
-$$Normal(8.647, 0.327)$$
-The mean mu produced by the specified model is 8.65. This is higher/lower than our approximated average for mu 
+$$Normal(8.69, 0.53)$$
+The mean mu produced by the specified model is 8.69. This is slightly than our MCMC approximated average of 9. 
 
 
 
@@ -638,10 +636,10 @@ a. Building and simulating the model:
 # STEP 1: DEFINE the model
 gp_model <- "
   data {
-    int<lower = 0> Y[5];
+    real<lower = -20> Y[5];
   }
   parameters {
-    real<lower= 0> mu;
+    real<lower= -20> mu;
   }
   model {
     Y ~ normal(mu, 64);
@@ -671,14 +669,14 @@ mcmc_dens_chains(gp_sim, pars = "mu") +
   ylab("density")
 ```
 
-c. Based on the density plots, the most plausible posterior value of mu seems to be...
+c. Based on the density plots, the most plausible posterior value of mu seems to be around -13. 
 
 d. The posterior model is as follows:
 ```{r}
 prior_mean <- -14
-prior_sd <- 2
+prior_sd <- 4
 obsv_mean <- mean(c(-10.1, 5.5, 0.1, -1.4, 11.5))
-obsv_sd <- 8
+obsv_sd <- 64
 n <- 5
 posterior_mu <- prior_mean*obsv_sd^2/(n*prior_sd^2+obsv_sd^2)+obsv_mean * ((n*prior_sd^2)/(n*prior_sd^2+obsv_sd^2))
 posterior_sigma <- (prior_sd^2*obsv_sd^2)/(n*prior_sd^2+obsv_sd^2)
@@ -687,7 +685,12 @@ posterior_mu
 posterior_sigma
 ```
 
-$$Normal(-10.4, 3.05)$$
-The mean mu produced by the specified model is -10.4. This is higher/lower than our approximated average for mu 
+$$Normal(-13.71, 15.69)$$
+```{r}
+summarize_normal_normal(mean=-14, sd=4, sigma=64, y_bar=c(-10.1, 5.5, 0.1, -1.4, 11.5), n = 5)
+```
+
+
+The mean mu produced by the specified model is -13.7. This is very close to our MCMC approximated average for mu (-13).
 
 
