@@ -1,7 +1,10 @@
 ---
 title: "BR6"
-author: 'Steph Jordan'
-output: html_document
+author: "Steph Jordan"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
 ---
 
 ```{r}
@@ -317,6 +320,7 @@ gp_model <- "
 ## Exercise 6.12
 
 a. The RSTAN syntax is as follows:
+
 ```{r}
 # STEP 1: DEFINE the model
 bb_model <- "
@@ -331,7 +335,9 @@ bb_model <- "
     pi ~ beta(1, 1);
   }
 "
+```
 
+```{r}
 # STEP 2: SIMULATE the posterior
 bb_sim <- stan(model_code = bb_model, data = list(Y = 12), 
                chains = 4, iter = 5000*2, seed = 84735)
@@ -401,7 +407,6 @@ bb_model <- "
     pi ~ beta(3, 8);
   }
 "
-#error somewhere in installation
 # STEP 2: SIMULATE the posterior
 bb_sim <- stan(model_code = bb_model, data = list(Y = 2), 
                chains = 3, iter = 12000, seed = 84735)
@@ -617,8 +622,8 @@ prior_sd <- 1.44
 obsv_mean <- mean(c(7.1, 8.9, 8.4, 8.6))
 obsv_sd <- 1.69
 n <- 4
-posterior_mu <- prior_mean*obsv_sd^2/(n*prior_sd^2+obsv_sd^2)+obsv_mean * ((n*prior_sd^2)/(n*prior_sd^2+obsv_sd^2))
-posterior_sigma <- (prior_sd^2*obsv_sd^2)/(n*prior_sd^2+obsv_sd^2)
+posterior_mu <- prior_mean*obsv_sd/(n*prior_sd+obsv_sd)+obsv_mean * ((n*prior_sd)/(n*prior_sd+obsv_sd))
+posterior_sigma <- (prior_sd*obsv_sd)/(n*prior_sd+obsv_sd)
 
 posterior_mu
 posterior_sigma
